@@ -12,8 +12,12 @@ Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2);
 Adafruit_StepperMotor *myMotor2 = AFMS.getStepper(200, 1);
 int current_step = 0;
 const int solarPin = 0;
+const int tempPin = 1;
+const int sleepTime = 6000;
 void setup() {
-   loraSerial.begin(57600);
+  Serial.println(analogRead(solarPin));
+  Serial.println(analogRead(tempPin));
+  loraSerial.begin(57600);
   debugSerial.begin(115200);
   Serial.begin(9600);           // set up Serial library at 9600 bps
   ttn.reset(true);
@@ -27,15 +31,24 @@ void setup() {
   myMotor->setSpeed(10);
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
 }
-void loraSend(uint32_t payload) {
-  Serial.println(payload);
-  Serial.println(sizeof(payload));
-  byte envoi[2];
-  envoi[0] = highByte(payload);
-  envoi[1] = lowByte(payload);
+void loraSend(uint32_t lum, uint32_t temp) {
+  
+  Serial.println(lum);
+  Serial.println(temp);
+  Serial.println(sizeof(lum));
+  Serial.println(sizeof(temp));
+  
+  byte envoi[4];
+  envoi[0] = highByte(lum);
+  envoi[1] = lowByte(lum);
+  
+  envoi[2] = highByte(temp);
+  envoi[3] = lowByte(temp);
+  
   ttn.sendBytes(envoi, sizeof(envoi));
   delay(5000);
 }
+
 void callbackLora(const uint8_t *payload, size_t size, port_t port) {
   Serial.println("Message received");
   if(payload[0] == 1){
@@ -46,8 +59,8 @@ void callbackLora(const uint8_t *payload, size_t size, port_t port) {
 }
 
 void loop(){
-  loraSend(analogRead(solarPin));
-  delay(10000);
+  loraSend(analogRead(solarPin),analogRead(tempPin));
+  delay(sleepTime);
 }
 
 bool safe_step(int steps) {
