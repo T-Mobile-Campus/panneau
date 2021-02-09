@@ -32,6 +32,7 @@ void setup() {
   ttn.onMessage(callbackLora);
   AFMS.begin();
   myMotor->setSpeed(10);
+  myMotor->setSpeed(10);
   pinMode(RESET, OUTPUT);   
 }
 void loraSend(uint32_t lum, uint32_t vib) {
@@ -39,7 +40,7 @@ void loraSend(uint32_t lum, uint32_t vib) {
   envoi[0] = highByte(lum);
   envoi[1] = lowByte(lum);
   for (byte i = 0, j = 0 ; i < 14; i += 2, j++) {
-    Serial.println(tabVal[j]);
+    //Serial.println(tabVal[j]);
     envoi[i + 2] = highByte(tabVal[j]);
     envoi[i + 3] = lowByte(tabVal[j]);
   }
@@ -86,28 +87,23 @@ void full_circle() {
 }
 void routine() {
   long v = analogRead(solarPin);
-  myMotor->step(20, FORWARD, MICROSTEP);
+  myMotor->step(10, BACKWARD, MICROSTEP);
   long v2 = analogRead(solarPin);
-  //Serial.println(v);
-  //Serial.println(v2);
-  if ( v > v2) {
-    search_light(BACKWARD);
-  }
-  else {
-    search_light(FORWARD);
-  }
+  search_light( v > v2 ? FORWARD : BACKWARD ,myMotor);
+  long h = analogRead(solarPin);
+  myMotor2->step(10, BACKWARD, MICROSTEP);
+  long h2 = analogRead(solarPin);
+  search_light( h > h2 ? FORWARD : BACKWARD, myMotor2);
 }
-void search_light(int DIRECTION) {
+void search_light(int DIRECTION, Adafruit_StepperMotor* motor) {
   long v, v2;
   do {
-    v = analogRead(solarPin);
-    myMotor->step(10, DIRECTION, MICROSTEP);
-    v2 = analogRead(solarPin);
-    // Serial.println(v);
-    //Serial.println(v2);
+      v = analogRead(solarPin);
+      motor->step(5, DIRECTION, MICROSTEP);
+      v2 = analogRead(solarPin);  
   }
   while ( v < v2 );
-  myMotor->step(5, DIRECTION == FORWARD ? BACKWARD : FORWARD, MICROSTEP);
+  motor->step(5, DIRECTION == FORWARD ? BACKWARD : FORWARD, MICROSTEP);
 }
 int valPlusGrandeParSecond() {
   int val = -1;
